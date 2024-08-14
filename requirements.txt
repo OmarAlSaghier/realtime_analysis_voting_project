@@ -1,0 +1,4 @@
+requests
+psycopg2
+simplejson
+confluent_kafka
