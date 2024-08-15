@@ -7,3 +7,4 @@ pandas
 streamlit
 kafka-python
 streamlit-autorefresh
+```
