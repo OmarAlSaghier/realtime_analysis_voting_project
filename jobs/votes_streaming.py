@@ -3,7 +3,7 @@ from pyspark.sql.functions import from_json, col
 from pyspark.sql.functions import sum as _sum
 from pyspark.sql.types import StructType, StructField, StringType, IntegerType, TimestampType
 
-from src.config.settings import KAFKA_BOOTSTRAP_SERVER_DOCKER, votes_topic, votes_per_candidate_topic, turnout_by_location_topic
+from src.config.settings import KAFKA_BOOTSTRAP_SERVER, votes_topic, votes_per_candidate_topic, turnout_by_location_topic
 
 
 if __name__ == "__main__":
@@ -48,7 +48,7 @@ if __name__ == "__main__":
     # Read streams from Kafka
     votes_df = spark.readStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
+        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER) \
         .option("subscribe", votes_topic) \
         .option("startingOffsets", "earliest") \
         .load() \
@@ -78,7 +78,7 @@ if __name__ == "__main__":
         .selectExpr("to_json(struct(*)) AS value") \
         .writeStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
+        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER) \
         .option("topic", votes_per_candidate_topic) \
         .option("checkpointLocation", "/opt/bitnami/spark/voting_project/checkpoints/checkpoint1") \
         .outputMode("update") \
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     turnout_by_location_to_kafka = turnout_by_location.selectExpr("to_json(struct(*)) AS value") \
         .writeStream \
         .format("kafka") \
-        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
+        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER) \
         .option("topic", turnout_by_location_topic) \
         .option("checkpointLocation", "/opt/bitnami/spark/voting_project/checkpoints/checkpoint2") \
         .outputMode("update") \
