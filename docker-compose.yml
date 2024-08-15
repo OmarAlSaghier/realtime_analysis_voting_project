@@ -1,7 +1,7 @@
 version: '3'
 
 x-spark-common: &spark-common
-  image: bitnami/spark:latest
+  image: bitnami/spark:3.5.1
   volumes:
     - ./jobs:/opt/bitnami/spark/jobs
   command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
@@ -14,10 +14,6 @@ x-spark-common: &spark-common
     SPARK_MASTER_URL: spark://spark-master:7077
   networks:
     - datatechlabs
-
-# volumes:
-#   pinotController1:
-#   pinotServer1:
 
 services:
   zookeeper:
@@ -52,7 +48,6 @@ services:
       KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_INTERNAL:PLAINTEXT
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
-      # KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
@@ -83,11 +78,13 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    volumes:
+      - ./db_tables/db_tables.sql:/docker-entrypoint-initdb.d/db_tables.sql
     networks:
       - datatechlabs
 
   spark-master:
-    image: bitnami/spark:latest
+    image: bitnami/spark:3.5.1
     volumes:
       - ./jobs:/opt/bitnami/spark/jobs
       - ./src:/opt/bitnami/spark/src
