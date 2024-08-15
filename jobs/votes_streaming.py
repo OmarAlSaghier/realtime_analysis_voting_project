@@ -5,18 +5,11 @@ from pyspark.sql.types import StructType, StructField, StringType, IntegerType, 
 
 from src.config.settings import KAFKA_BOOTSTRAP_SERVER_DOCKER, votes_topic, votes_per_candidate_topic, turnout_by_location_topic
 
-# import pyspark
-# print(pyspark.__version__) # to check the version of pyspark
-
 
 if __name__ == "__main__":
     # Initialize SparkSession
-            # .master("local[*]") \
     spark = SparkSession.builder \
             .appName("ElectionAnalysis") \
-            .config("spark.jars.packages",
-                    "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2," \
-                    "org.postgresql:postgresql:42.7.1") \
             .config("spark.sql.adaptive.enabled", "false") \
             .getOrCreate()
     
@@ -52,6 +45,7 @@ if __name__ == "__main__":
         StructField("vote", IntegerType(), True)
     ])
 
+    # Read streams from Kafka
     votes_df = spark.readStream \
         .format("kafka") \
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
@@ -78,35 +72,39 @@ if __name__ == "__main__":
         .count() \
         .alias("total_votes")
     
-    # write stream to console
+    # Write streams to Kafka
+    print("WRITING TO votes_per_candidate STREAM")
     votes_per_candidate_to_kafka = votes_per_candidate \
-        .selectExpr("*") \
+        .selectExpr("to_json(struct(*)) AS value") \
         .writeStream \
-        .format("console") \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
+        .option("topic", votes_per_candidate_topic) \
+        .option("checkpointLocation", "/opt/bitnami/spark/voting_project/checkpoints/checkpoint1") \
         .outputMode("update") \
         .start()
 
-    # # Write aggregated data to Kafka topics ('aggregated_votes_per_candidate', 'aggregated_turnout_by_location')
-    # votes_per_candidate_to_kafka = votes_per_candidate \
-    #     .selectExpr("to_json(struct(*)) AS value") \
-    #     .writeStream \
-    #     .format("kafka") \
-    #     .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
-    #     .option("topic", votes_per_candidate_topic) \
-    #     .option("checkpointLocation", "/opt/bitnami/spark/voting_project/checkpoints/checkpoint1") \
-    #     .outputMode("update") \
-    #     .start()
-    
+    print("WRITING TO turnout_by_location STREAM")
+    turnout_by_location_to_kafka = turnout_by_location.selectExpr("to_json(struct(*)) AS value") \
+        .writeStream \
+        .format("kafka") \
+        .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
+        .option("topic", turnout_by_location_topic) \
+        .option("checkpointLocation", "/opt/bitnami/spark/voting_project/checkpoints/checkpoint2") \
+        .outputMode("update") \
+        .start()
 
-    # turnout_by_location_to_kafka = turnout_by_location.selectExpr("to_json(struct(*)) AS value") \
+    # # write stream to console: FOR DEBUGGING
+    # votes_per_candidate \
+    #     .selectExpr("*") \
     #     .writeStream \
-    #     .format("kafka") \
-    #     .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP_SERVER_DOCKER) \
-    #     .option("topic", turnout_by_location_topic) \
-    #     .option("checkpointLocation", "/opt/bitnami/spark/voting_project/checkpoints/checkpoint2") \
+    #     .format("console") \
     #     .outputMode("update") \
-    #     .start()
+    #     .start() \
+    #     .awaitTermination()
 
     # Await termination for the streaming queries
     votes_per_candidate_to_kafka.awaitTermination()
-    # turnout_by_location_to_kafka.awaitTermination()
+    turnout_by_location_to_kafka.awaitTermination()
+
+    print("STREAMING JOB TERMINATED")
