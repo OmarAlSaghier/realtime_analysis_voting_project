@@ -2,3 +2,8 @@ requests
 psycopg2
 simplejson
 confluent_kafka
+matplotlib
+pandas
+streamlit
+kafka-python
+streamlit-autorefresh
