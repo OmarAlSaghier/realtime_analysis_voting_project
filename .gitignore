@@ -130,6 +130,7 @@ ENV/
 env.bak/
 venv.bak/
 streaming_env/
+docker.env
 
 # Spyder project settings
 .spyderproject

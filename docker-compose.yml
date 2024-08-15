@@ -89,10 +89,13 @@ services:
       - ./jobs:/opt/bitnami/spark/jobs
       - ./src:/opt/bitnami/spark/src
       - ./requirements.txt:/opt/bitnami/spark/requirements.txt
-    command: bin/spark-class org.apache.spark.deploy.master.Master
+      - ./spark_entrypoint.sh:/opt/bitnami/spark/entrypoint.sh
+    command: ["/bin/bash", "/opt/bitnami/spark/entrypoint.sh"]
     ports:
       - "9090:8080"
       - "7077:7077"
+    env_file:
+      - docker.env
     networks:
       - datatechlabs
   
