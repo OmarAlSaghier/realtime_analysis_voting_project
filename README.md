@@ -3,6 +3,10 @@
 ## Description
 This project is a realtime analysis voting project. It is a simple project that allows users to vote for their favorite candidate and see the results in realtime. The project is built using Python, Spark and Spark-streaming, Kafka, and Streamlit.
 
+## Architecture (image)
+here is the architecture of the project:
+![architecture](Arch/realtime_voting.png)
+
 ## files
 - `src/generate_voters.py` - This file is used to generate voters and send them to the Kafka broker.
 - `src/simulate_voting.py` - This file is used to simulate the voting process after reading the generated voters from the Kafka broker.
